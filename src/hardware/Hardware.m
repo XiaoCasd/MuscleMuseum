@@ -1,7 +1,25 @@
 classdef (Abstract) Hardware < handle & matlab.mixin.SetGetExactNames
-    %This class provides generalized parameter and functions for
-    %hardware components that may be interfaced with MM. Most of these
-    %properties are specific to AWG controls.
+    %:class:`Hardware` provides a common abstraction for controllable instruments.
+    %
+    % Encapsulates identity, resource naming, data type for uploads, and logging
+    % of instrument objects. Concrete subclasses implement model-specific control
+    % (e.g., AWGs, scopes, cameras, phase locks).
+    %
+    % Returns
+    % -------
+    % None
+    %
+    % Examples
+    % --------
+    % .. code-block:: matlab
+    %
+    %    awg = KeysightWaveformGenerator("TCPIP0::192.168.0.2::inst0::INSTR", name="AWG1");
+    %    % use awg-specific APIs here
+    %
+    % Notes
+    % -----
+    % The default logging location is derived from ``Config.mat`` → ``ComputerConfig.HardwareLogOrigin``.
+    % Set ``isSaving=false`` to disable object logging.
     %Properties:
     %
     %   Name: Nickname of device
@@ -44,6 +62,21 @@ classdef (Abstract) Hardware < handle & matlab.mixin.SetGetExactNames
 
     methods
         function obj = Hardware(resourceName,name,isSaving)
+            % Construct a :class:`Hardware` object.
+            %
+            % Parameters
+            % ----------
+            % resourceName : string
+            %     VISA/ethernet/COM resource identifier for the device.
+            % name : string, optional
+            %     Short device nickname used for logging folder names.
+            % isSaving : logical, optional
+            %     Whether to save device snapshots to disk (default true).
+            %
+            % Returns
+            % -------
+            % obj : Hardware
+            %     New base hardware instance.
             arguments
                 resourceName string
                 name string = string.empty
@@ -68,6 +101,11 @@ classdef (Abstract) Hardware < handle & matlab.mixin.SetGetExactNames
 
     methods (Access = protected)
         function saveObject(obj)
+            % Save a timestamped snapshot of the hardware object to :attr:`DataPath`.
+            %
+            % Returns
+            % -------
+            % None
             if isfolder(obj.DataPath)
                 t = string(datetime('now','Format','yyyyMMddHHmmss'));
                 save(fullfile(obj.DataPath,obj.Name + "_" + t),'obj')
